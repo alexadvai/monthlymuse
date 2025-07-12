@@ -28,8 +28,18 @@ const SuggestionSchema = z.object({
 });
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 
+const AchievementSchema = z.object({
+    name: z.string().describe("The name of the achievement, e.g., 'Super Saver'."),
+    description: z.string().describe("A brief description of how the achievement was earned."),
+});
+export type Achievement = z.infer<typeof AchievementSchema>;
+
 const CostSavingSuggestionsOutputSchema = z.object({
+  financialHealthScore: z.number().min(0).max(100).describe("A score from 0 to 100 representing the user's financial health."),
+  financialAnalysis: z.string().describe("A brief, one or two sentence analysis of the user's financial situation based on their budget."),
+  achievements: z.array(AchievementSchema).describe("A list of achievements the user has unlocked based on their current budget."),
   suggestions: z.array(SuggestionSchema).describe('A list of structured cost-saving suggestions.'),
+  suggestedCategory: z.string().optional().describe("If the 'Other' expense category is high, suggest a new, more specific category name for it (e.g., 'Shopping', 'Entertainment')."),
 });
 export type CostSavingSuggestionsOutput = z.infer<typeof CostSavingSuggestionsOutputSchema>;
 
@@ -41,7 +51,7 @@ const prompt = ai.definePrompt({
   name: 'costSavingSuggestionsPrompt',
   input: {schema: CostSavingSuggestionsInputSchema},
   output: {schema: CostSavingSuggestionsOutputSchema},
-  prompt: `You are a friendly and encouraging financial advisor. Your goal is to help users find practical ways to save money based on their income and expenses.
+  prompt: `You are a friendly and encouraging financial advisor. Your goal is to help users find practical ways to save money and improve their financial health.
 
 Analyze the following monthly financial data:
 - Income: {{{income}}}
@@ -51,13 +61,32 @@ Analyze the following monthly financial data:
 - Transportation: {{{transportation}}}
 - Other: {{{other}}}
 
-Based on this data, provide a list of specific, actionable cost-saving suggestions. For each suggestion, determine which expense category it relates to, and assess its potential impact using one of the following levels: "High Impact", "Quick Win", or "Good Habit".
+Based on this data, you must perform the following tasks:
 
-- "High Impact": A suggestion that could lead to significant savings but might require more effort.
-- "Quick Win": An easy-to-implement suggestion for immediate savings.
-- "Good Habit": A long-term behavioral change that adds up over time.
+1.  **Calculate a Financial Health Score:**
+    -   Create a score from 0 to 100.
+    -   Base the score on the savings rate (income minus total expenses). A higher savings rate should result in a higher score. For example, a savings rate over 20% is excellent (90+ score), 10-20% is good (75-89), 0-10% is average (50-74), and a negative rate is poor (<50).
+    -   Also consider the rent-to-income ratio. If rent is over 40% of income, the score should be penalized.
 
-Present your response as a JSON object that adheres to the output schema. Ensure each suggestion is clear, positive, and empowering.
+2.  **Provide a Brief Financial Analysis:**
+    -   Write a one or two-sentence summary of the user's financial situation that is encouraging and actionable.
+
+3.  **Identify Achievements:**
+    -   Based on the user's budget, award them achievements. Examples include:
+        -   'Super Saver': Savings rate is 20% or more.
+        -   'Budget Boss': Total expenses are less than 90% of income.
+        -   'Frugal Foodie': Food expenses are less than 15% of income.
+        -   'Housing Hero': Rent is less than 30% of income.
+    -   If no achievements are unlocked, return an empty array.
+
+4.  **Generate Cost-Saving Suggestions:**
+    -   Provide a list of specific, actionable cost-saving suggestions.
+    -   For each suggestion, determine the expense category and its potential impact ("High Impact", "Quick Win", "Good Habit").
+
+5.  **Suggest New Category (Optional):**
+    -   If the "Other" expense is a significant portion (e.g., >20%) of total expenses, suggest a more specific category name for it like "Shopping", "Entertainment", or "Personal Care".
+
+Present your complete response as a single JSON object that adheres to the output schema.
 `,
 });
 

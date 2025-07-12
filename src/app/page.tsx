@@ -18,7 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { ExpenseInput } from "@/components/expense-input";
 import { ExpenseChart, type ChartData } from "@/components/expense-chart";
 import { getSuggestions } from "./actions";
-import type { Suggestion } from "@/ai/flows/cost-saving-suggestions";
+import type { Suggestion, Achievement } from "@/ai/flows/cost-saving-suggestions";
+import { Progress } from "@/components/ui/progress";
 import {
   Car,
   Home as HomeIcon,
@@ -33,6 +34,10 @@ import {
   Sparkles,
   Trophy,
   Activity,
+  Award,
+  ShieldCheck,
+  LineChart,
+  Target,
 } from "lucide-react";
 
 interface ExpenseCategory {
@@ -57,7 +62,15 @@ const suggestionIcons = {
   "Good Habit": <Activity className="w-4 h-4 text-emerald-400" />,
 };
 
-export default function Home() {
+interface AiResultState {
+  suggestions: Suggestion[];
+  achievements: Achievement[];
+  financialHealthScore: number;
+  financialAnalysis: string;
+  suggestedCategory?: string;
+}
+
+export default function HomePage() {
   const [income, setIncome] = useState(5000);
   const [expenses, setExpenses] = useState({
     rent: 1500,
@@ -68,7 +81,7 @@ export default function Home() {
   });
 
   const [isPending, startTransition] = useTransition();
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [aiResult, setAiResult] = useState<AiResultState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const totalExpenses = useMemo(() => Object.values(expenses).reduce((acc, cur) => acc + cur, 0), [expenses]);
@@ -94,15 +107,22 @@ export default function Home() {
 
   const handleGetSuggestions = () => {
     setError(null);
-    setSuggestions([]);
+    setAiResult(null);
     startTransition(async () => {
-      const result = await getSuggestions({ income, ...expenses });
-      if (result.error) {
-        setError(result.error);
-      } else if (result.suggestions) {
-        setSuggestions(result.suggestions);
+      const { result, error } = await getSuggestions({ income, ...expenses });
+      if (error) {
+        setError(error);
+      } else if (result) {
+        setAiResult(result);
       }
     });
+  };
+  
+  const getHealthScoreColor = (score: number) => {
+    if (score >= 90) return "text-emerald-500";
+    if (score >= 75) return "text-lime-500";
+    if (score >= 50) return "text-yellow-500";
+    return "text-rose-500";
   };
 
   return (
@@ -118,7 +138,7 @@ export default function Home() {
 
       <main className="flex-grow container mx-auto px-4 pb-8">
         <div className="grid lg:grid-cols-5 gap-8 items-start">
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-8">
             <Card className="shadow-xl rounded-2xl border-transparent">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold">Your Finances</CardTitle>
@@ -162,6 +182,70 @@ export default function Home() {
                 ))}
               </CardContent>
             </Card>
+
+            <Card className="shadow-xl rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-bold">
+                  <Lightbulb className="text-accent" />
+                  <span>Smart Savings</span>
+                </CardTitle>
+                <CardDescription>
+                  Get AI-powered tips to reduce your spending. Your insights will appear here.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="min-h-[250px]">
+                {isPending && (
+                  <div className="space-y-4 pt-2">
+                    <Skeleton className="h-6 w-full rounded-md" />
+                    <Skeleton className="h-6 w-4/5 rounded-md" />
+                    <Skeleton className="h-6 w-full rounded-md" />
+                    <Skeleton className="h-6 w-3/4 rounded-md" />
+                  </div>
+                )}
+                {error && (
+                   <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                {!isPending && !error && !aiResult && (
+                  <div className="text-center text-muted-foreground pt-16">
+                    <p>Click the button to get personalized savings tips!</p>
+                  </div>
+                )}
+                {aiResult && aiResult.suggestions.length > 0 && (
+                  <ul className="space-y-4 text-sm">
+                    {aiResult.suggestions.map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="mt-0.5">{suggestionIcons[item.impact]}</div>
+                        <div className="flex-1">
+                           <p className="font-semibold text-foreground">{item.suggestion}</p>
+                           <div className="flex items-center gap-2 mt-1">
+                             <Badge variant="secondary">{item.category}</Badge>
+                             <Badge variant="outline">{item.impact}</Badge>
+                           </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button
+                  onClick={handleGetSuggestions}
+                  disabled={isPending}
+                  className="w-full font-semibold text-base py-6 bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg"
+                >
+                  {isPending ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Generate Insights"
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+
           </div>
 
           <div className="lg:col-span-2 space-y-8 lg:sticky lg:top-8">
@@ -190,68 +274,54 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-xl rounded-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-bold">
-                  <Lightbulb className="text-accent" />
-                  <span>Smart Savings</span>
-                </CardTitle>
-                <CardDescription>
-                  Get AI-powered tips to reduce your spending.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="min-h-[200px]">
-                {isPending && (
-                  <div className="space-y-4 pt-2">
-                    <Skeleton className="h-6 w-full rounded-md" />
-                    <Skeleton className="h-6 w-4/5 rounded-md" />
-                    <Skeleton className="h-6 w-full rounded-md" />
-                    <Skeleton className="h-6 w-3/4 rounded-md" />
+            {aiResult && (
+              <Card className="shadow-xl rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-bold">
+                    <ShieldCheck className="text-accent" />
+                    <span>Financial Health</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex justify-between items-end mb-1">
+                      <Label>Health Score</Label>
+                      <span className={`text-2xl font-bold ${getHealthScoreColor(aiResult.financialHealthScore)}`}>{aiResult.financialHealthScore} <span className="text-sm font-normal text-muted-foreground">/ 100</span></span>
+                    </div>
+                    <Progress value={aiResult.financialHealthScore} className="h-3" indicatorClassName={getHealthScoreColor(aiResult.financialHealthScore).replace('text-','bg-')} />
+                    <p className="text-sm text-muted-foreground mt-2">{aiResult.financialAnalysis}</p>
                   </div>
-                )}
-                {error && (
-                   <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {!isPending && !error && suggestions.length === 0 && (
-                  <div className="text-center text-muted-foreground pt-10">
-                    <p>Click the button to get personalized savings tips!</p>
-                  </div>
-                )}
-                {!isPending && suggestions.length > 0 && (
-                  <ul className="space-y-4 text-sm">
-                    {suggestions.map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="mt-0.5">{suggestionIcons[item.impact]}</div>
-                        <div className="flex-1">
-                           <p className="font-semibold text-foreground">{item.suggestion}</p>
-                           <div className="flex items-center gap-2 mt-1">
-                             <Badge variant="secondary">{item.category}</Badge>
-                             <Badge variant="outline">{item.impact}</Badge>
+
+                  {aiResult.achievements.length > 0 && (
+                    <div>
+                      <Label className="flex items-center gap-2 mb-3">
+                        <Award className="w-4 h-4"/>
+                        Achievements Unlocked
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        {aiResult.achievements.map((ach, i) => (
+                           <div key={i} className="bg-secondary/50 p-3 rounded-lg border border-border">
+                              <p className="font-semibold text-secondary-foreground">{ach.name}</p>
+                              <p className="text-muted-foreground text-xs">{ach.description}</p>
                            </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button
-                  onClick={handleGetSuggestions}
-                  disabled={isPending}
-                  className="w-full font-semibold text-base py-6 bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg"
-                >
-                  {isPending ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    "Generate Suggestions"
+                        ))}
+                      </div>
+                    </div>
                   )}
-                </Button>
-              </CardFooter>
-            </Card>
+
+                  {aiResult.suggestedCategory && (
+                     <Alert>
+                        <Target className="h-4 w-4" />
+                        <AlertTitle>Suggestion for 'Other'</AlertTitle>
+                        <AlertDescription>
+                          Consider creating a new category named <span className="font-semibold text-primary">"{aiResult.suggestedCategory}"</span> to better track your spending.
+                        </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
           </div>
         </div>
       </main>
