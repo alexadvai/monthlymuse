@@ -10,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExpenseInput } from "@/components/expense-input";
@@ -23,6 +25,8 @@ import {
   Lightbulb,
   Loader2,
   AlertCircle,
+  DollarSign,
+  Wallet,
 } from "lucide-react";
 
 interface ExpenseCategory {
@@ -41,6 +45,7 @@ const expenseCategories: ExpenseCategory[] = [
 ];
 
 export default function Home() {
+  const [income, setIncome] = useState(5000);
   const [expenses, setExpenses] = useState({
     rent: 1500,
     utilities: 150,
@@ -53,17 +58,23 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const total = useMemo(() => Object.values(expenses).reduce((acc, cur) => acc + cur, 0), [expenses]);
+  const totalExpenses = useMemo(() => Object.values(expenses).reduce((acc, cur) => acc + cur, 0), [expenses]);
+  const balance = useMemo(() => income - totalExpenses, [income, totalExpenses]);
 
   const handleExpenseChange = (id: keyof typeof expenses, value: number) => {
     setExpenses(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleIncomeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    setIncome(isNaN(value) ? 0 : value);
   };
 
   const handleGetSuggestions = () => {
     setError(null);
     setSuggestions([]);
     startTransition(async () => {
-      const result = await getSuggestions(expenses);
+      const result = await getSuggestions({ income, ...expenses });
       if (result.error) {
         setError(result.error);
       } else if (result.suggestions) {
@@ -88,12 +99,34 @@ export default function Home() {
           <div className="lg:col-span-3">
             <Card className="shadow-xl rounded-2xl border-transparent">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">Expense Calculator</CardTitle>
+                <CardTitle className="text-2xl font-bold">Your Finances</CardTitle>
                 <CardDescription>
-                  Adjust sliders or enter amounts to see your total.
+                  Enter your income and adjust expense sliders to see your budget breakdown.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8 pt-2">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-6 h-6 text-primary" />
+                      <Label htmlFor="income" className="text-lg font-medium tracking-wide">Monthly Income</Label>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        id="income"
+                        type="number"
+                        value={income.toString()}
+                        onChange={handleIncomeChange}
+                        className="w-32 h-11 text-lg font-semibold pl-7 text-right"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-border" />
+
                 {expenseCategories.map(({ id, label, icon, max }) => (
                   <ExpenseInput
                     key={id}
@@ -111,19 +144,24 @@ export default function Home() {
 
           <div className="lg:col-span-2 space-y-8 lg:sticky lg:top-8">
             <Card className="shadow-xl rounded-2xl text-center bg-card/80 backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-semibold">
-                  Total Monthly Cost
+                  Remaining Balance
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-5xl font-extrabold text-primary tracking-tighter">
-                  {total.toLocaleString("en-US", {
+                  {balance.toLocaleString("en-US", {
                     style: "currency",
                     currency: "USD",
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  <span className="font-semibold">
+                    {totalExpenses.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                  </span> in total expenses
                 </p>
               </CardContent>
             </Card>

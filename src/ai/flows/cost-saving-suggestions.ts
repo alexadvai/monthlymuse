@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CostSavingSuggestionsInputSchema = z.object({
+  income: z.number().describe('Monthly income.'),
   rent: z.number().describe('Monthly rent expense.'),
   utilities: z.number().describe('Monthly utilities expense (electricity, gas, water).'),
   food: z.number().describe('Monthly food expense (groceries, dining out).'),
@@ -35,15 +36,16 @@ const prompt = ai.definePrompt({
   name: 'costSavingSuggestionsPrompt',
   input: {schema: CostSavingSuggestionsInputSchema},
   output: {schema: CostSavingSuggestionsOutputSchema},
-  prompt: `Analyze the following monthly expenses and provide a list of cost-saving suggestions.
+  prompt: `Analyze the following monthly income and expenses and provide a list of cost-saving suggestions.
 
+Income: {{{income}}}
 Rent: {{{rent}}}
 Utilities: {{{utilities}}}
 Food: {{{food}}}
 Transportation: {{{transportation}}}
 Other: {{{other}}}
 
-Consider each category and suggest practical ways to reduce spending.  Be specific, and provide multiple suggestions.
+Consider each category and suggest practical ways to reduce spending. Also consider the income to expense ratio. Be specific, and provide multiple suggestions.
 Format your response as a JSON array of strings.  Each string should be a suggestion.
 `,
 });
