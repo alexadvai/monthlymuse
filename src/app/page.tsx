@@ -13,9 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { ExpenseInput } from "@/components/expense-input";
+import { ExpenseChart, type ChartData } from "@/components/expense-chart";
 import { getSuggestions } from "./actions";
+import type { Suggestion } from "@/ai/flows/cost-saving-suggestions";
 import {
   Car,
   Home as HomeIcon,
@@ -27,6 +30,9 @@ import {
   AlertCircle,
   DollarSign,
   Wallet,
+  Sparkles,
+  Trophy,
+  Activity,
 } from "lucide-react";
 
 interface ExpenseCategory {
@@ -34,15 +40,22 @@ interface ExpenseCategory {
   label: string;
   icon: ReactNode;
   max: number;
+  color: string;
 }
 
 const expenseCategories: ExpenseCategory[] = [
-  { id: "rent", label: "Rent/Mortgage", icon: <HomeIcon className="w-6 h-6 text-primary" />, max: 5000 },
-  { id: "utilities", label: "Utilities", icon: <Zap className="w-6 h-6 text-primary" />, max: 1000 },
-  { id: "food", label: "Food & Groceries", icon: <UtensilsCrossed className="w-6 h-6 text-primary" />, max: 2000 },
-  { id: "transportation", label: "Transportation", icon: <Car className="w-6 h-6 text-primary" />, max: 1500 },
-  { id: "other", label: "Other", icon: <MoreHorizontal className="w-6 h-6 text-primary" />, max: 2000 },
+  { id: "rent", label: "Rent/Mortgage", icon: <HomeIcon className="w-6 h-6" />, max: 5000, color: "hsl(var(--chart-1))" },
+  { id: "utilities", label: "Utilities", icon: <Zap className="w-6 h-6" />, max: 1000, color: "hsl(var(--chart-2))" },
+  { id: "food", label: "Food & Groceries", icon: <UtensilsCrossed className="w-6 h-6" />, max: 2000, color: "hsl(var(--chart-3))" },
+  { id: "transportation", label: "Transportation", icon: <Car className="w-6 h-6" />, max: 1500, color: "hsl(var(--chart-4))" },
+  { id: "other", label: "Other", icon: <MoreHorizontal className="w-6 h-6" />, max: 2000, color: "hsl(var(--chart-5))" },
 ];
+
+const suggestionIcons = {
+  "High Impact": <Trophy className="w-4 h-4 text-amber-400" />,
+  "Quick Win": <Sparkles className="w-4 h-4 text-rose-400" />,
+  "Good Habit": <Activity className="w-4 h-4 text-emerald-400" />,
+};
 
 export default function Home() {
   const [income, setIncome] = useState(5000);
@@ -55,11 +68,20 @@ export default function Home() {
   });
 
   const [isPending, startTransition] = useTransition();
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const totalExpenses = useMemo(() => Object.values(expenses).reduce((acc, cur) => acc + cur, 0), [expenses]);
   const balance = useMemo(() => income - totalExpenses, [income, totalExpenses]);
+
+  const chartData: ChartData[] = useMemo(() => {
+    return expenseCategories.map(category => ({
+      name: category.label,
+      value: expenses[category.id],
+      fill: category.color,
+      icon: category.icon,
+    })).filter(item => item.value > 0);
+  }, [expenses]);
 
   const handleExpenseChange = (id: keyof typeof expenses, value: number) => {
     setExpenses(prev => ({ ...prev, [id]: value }));
@@ -143,26 +165,28 @@ export default function Home() {
           </div>
 
           <div className="lg:col-span-2 space-y-8 lg:sticky lg:top-8">
-            <Card className="shadow-xl rounded-2xl text-center bg-card/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold">
-                  Remaining Balance
+            <Card className="shadow-xl rounded-2xl bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-center">
+                  Your Budget Breakdown
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-5xl font-extrabold text-primary tracking-tighter">
-                  {balance.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  <span className="font-semibold">
-                    {totalExpenses.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0})}
-                  </span> in total expenses
-                </p>
+              <CardContent className="flex flex-col items-center">
+                <ExpenseChart data={chartData} />
+                 <div className="w-full text-center mt-4">
+                  <p className="text-sm text-muted-foreground">Remaining Balance</p>
+                  <p className="text-4xl font-extrabold text-primary tracking-tighter">
+                    {balance.toLocaleString("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    out of {income.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
@@ -176,18 +200,19 @@ export default function Home() {
                   Get AI-powered tips to reduce your spending.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="min-h-[160px]">
+              <CardContent className="min-h-[200px]">
                 {isPending && (
-                  <div className="space-y-3 pt-2">
-                    <Skeleton className="h-5 w-full rounded-md" />
-                    <Skeleton className="h-5 w-4/5 rounded-md" />
-                    <Skeleton className="h-5 w-full rounded-md" />
-                    <Skeleton className="h-5 w-3/4 rounded-md" />
+                  <div className="space-y-4 pt-2">
+                    <Skeleton className="h-6 w-full rounded-md" />
+                    <Skeleton className="h-6 w-4/5 rounded-md" />
+                    <Skeleton className="h-6 w-full rounded-md" />
+                    <Skeleton className="h-6 w-3/4 rounded-md" />
                   </div>
                 )}
                 {error && (
-                  <Alert variant="destructive">
+                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
@@ -197,11 +222,17 @@ export default function Home() {
                   </div>
                 )}
                 {!isPending && suggestions.length > 0 && (
-                  <ul className="space-y-3 text-sm">
-                    {suggestions.map((suggestion, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-accent mt-1">&#8226;</span>
-                        <span>{suggestion}</span>
+                  <ul className="space-y-4 text-sm">
+                    {suggestions.map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="mt-0.5">{suggestionIcons[item.impact]}</div>
+                        <div className="flex-1">
+                           <p className="font-semibold text-foreground">{item.suggestion}</p>
+                           <div className="flex items-center gap-2 mt-1">
+                             <Badge variant="secondary">{item.category}</Badge>
+                             <Badge variant="outline">{item.impact}</Badge>
+                           </div>
+                        </div>
                       </li>
                     ))}
                   </ul>

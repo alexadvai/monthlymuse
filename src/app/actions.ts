@@ -1,8 +1,8 @@
 'use server';
 
-import { costSavingSuggestions, type CostSavingSuggestionsInput } from '@/ai/flows/cost-saving-suggestions';
+import { costSavingSuggestions, type CostSavingSuggestionsInput, type CostSavingSuggestionsOutput } from '@/ai/flows/cost-saving-suggestions';
 
-export async function getSuggestions(input: CostSavingSuggestionsInput) {
+export async function getSuggestions(input: CostSavingSuggestionsInput): Promise<{ suggestions: CostSavingSuggestionsOutput['suggestions'] | null, error: string | null }> {
   try {
     const result = await costSavingSuggestions(input);
     return { suggestions: result.suggestions, error: null };

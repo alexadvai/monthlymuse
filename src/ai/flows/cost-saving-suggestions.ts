@@ -21,10 +21,15 @@ const CostSavingSuggestionsInputSchema = z.object({
 });
 export type CostSavingSuggestionsInput = z.infer<typeof CostSavingSuggestionsInputSchema>;
 
+const SuggestionSchema = z.object({
+  category: z.enum(["Rent/Mortgage", "Utilities", "Food", "Transportation", "Other", "General"]).describe("The expense category this suggestion applies to."),
+  impact: z.enum(["High Impact", "Quick Win", "Good Habit"]).describe("The potential impact of the suggestion."),
+  suggestion: z.string().describe("The specific, actionable cost-saving suggestion.")
+});
+export type Suggestion = z.infer<typeof SuggestionSchema>;
+
 const CostSavingSuggestionsOutputSchema = z.object({
-  suggestions: z.array(
-    z.string().describe('A cost saving suggestion.')
-  ).describe('A list of cost saving suggestions based on the provided expenses.'),
+  suggestions: z.array(SuggestionSchema).describe('A list of structured cost-saving suggestions.'),
 });
 export type CostSavingSuggestionsOutput = z.infer<typeof CostSavingSuggestionsOutputSchema>;
 
@@ -36,17 +41,23 @@ const prompt = ai.definePrompt({
   name: 'costSavingSuggestionsPrompt',
   input: {schema: CostSavingSuggestionsInputSchema},
   output: {schema: CostSavingSuggestionsOutputSchema},
-  prompt: `Analyze the following monthly income and expenses and provide a list of cost-saving suggestions.
+  prompt: `You are a friendly and encouraging financial advisor. Your goal is to help users find practical ways to save money based on their income and expenses.
 
-Income: {{{income}}}
-Rent: {{{rent}}}
-Utilities: {{{utilities}}}
-Food: {{{food}}}
-Transportation: {{{transportation}}}
-Other: {{{other}}}
+Analyze the following monthly financial data:
+- Income: {{{income}}}
+- Rent/Mortgage: {{{rent}}}
+- Utilities: {{{utilities}}}
+- Food: {{{food}}}
+- Transportation: {{{transportation}}}
+- Other: {{{other}}}
 
-Consider each category and suggest practical ways to reduce spending. Also consider the income to expense ratio. Be specific, and provide multiple suggestions.
-Format your response as a JSON array of strings.  Each string should be a suggestion.
+Based on this data, provide a list of specific, actionable cost-saving suggestions. For each suggestion, determine which expense category it relates to, and assess its potential impact using one of the following levels: "High Impact", "Quick Win", or "Good Habit".
+
+- "High Impact": A suggestion that could lead to significant savings but might require more effort.
+- "Quick Win": An easy-to-implement suggestion for immediate savings.
+- "Good Habit": A long-term behavioral change that adds up over time.
+
+Present your response as a JSON object that adheres to the output schema. Ensure each suggestion is clear, positive, and empowering.
 `,
 });
 
