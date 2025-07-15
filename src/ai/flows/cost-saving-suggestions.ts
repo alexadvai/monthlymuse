@@ -4,52 +4,15 @@
  * @fileOverview This file defines the Genkit flow for providing cost-saving suggestions based on user-entered expenses.
  *
  * - costSavingSuggestions - A function that takes expense data as input and returns cost-saving suggestions.
- * - CostSavingSuggestionsInput - The input type for the costSavingSuggestions function.
- * - CostSavingSuggestionsOutput - The return type for the costSavingSuggestions function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const CostSavingSuggestionsInputSchema = z.object({
-  income: z.number().describe('Monthly income.'),
-  rent: z.number().describe('Monthly rent expense.'),
-  utilities: z.number().describe('Monthly utilities expense (electricity, gas, water).'),
-  food: z.number().describe('Monthly food expense (groceries, dining out).'),
-  transportation: z.number().describe('Monthly transportation expense (car, public transit).'),
-  other: z.number().describe('Other monthly expenses.'),
-});
-export type CostSavingSuggestionsInput = z.infer<typeof CostSavingSuggestionsInputSchema>;
-
-const SuggestionSchema = z.object({
-  category: z.enum(["Rent/Mortgage", "Utilities", "Food", "Transportation", "Other", "General"]).describe("The expense category this suggestion applies to."),
-  impact: z.enum(["High Impact", "Quick Win", "Good Habit"]).describe("The potential impact of the suggestion."),
-  suggestion: z.string().describe("The specific, actionable cost-saving suggestion.")
-});
-export type Suggestion = z.infer<typeof SuggestionSchema>;
-
-const AchievementSchema = z.object({
-    name: z.string().describe("The name of the achievement, e.g., 'Super Saver'."),
-    description: z.string().describe("A brief description of how the achievement was earned."),
-});
-export type Achievement = z.infer<typeof AchievementSchema>;
-
-const MonthlyPlanSchema = z.object({
-  month: z.number().describe("The month number (1-12)."),
-  projectedBalance: z.number().describe("The projected balance at the end of this month."),
-});
-export type MonthlyPlan = z.infer<typeof MonthlyPlanSchema>;
-
-
-const CostSavingSuggestionsOutputSchema = z.object({
-  financialHealthScore: z.number().min(0).max(100).describe("A score from 0 to 100 representing the user's financial health."),
-  financialAnalysis: z.string().describe("A brief, one or two sentence analysis of the user's financial situation based on their budget."),
-  achievements: z.array(AchievementSchema).describe("A list of achievements the user has unlocked based on their current budget."),
-  suggestions: z.array(SuggestionSchema).describe('A list of structured cost-saving suggestions.'),
-  suggestedCategory: z.string().optional().describe("If the 'Other' expense category is high, suggest a new, more specific category name for it (e.g., 'Shopping', 'Entertainment')."),
-  twelveMonthPlan: z.array(MonthlyPlanSchema).describe("A 12-month savings projection based on current numbers and incorporating some of the suggestions."),
-});
-export type CostSavingSuggestionsOutput = z.infer<typeof CostSavingSuggestionsOutputSchema>;
+import { 
+  CostSavingSuggestionsInputSchema, 
+  CostSavingSuggestionsOutputSchema,
+  type CostSavingSuggestionsInput,
+  type CostSavingSuggestionsOutput
+} from '@/ai/schemas';
 
 export async function costSavingSuggestions(input: CostSavingSuggestionsInput): Promise<CostSavingSuggestionsOutput> {
   return costSavingSuggestionsFlow(input);
@@ -68,6 +31,7 @@ Analyze the following monthly financial data:
 - Food: {{{food}}}
 - Transportation: {{{transportation}}}
 - Other: {{{other}}}
+- Goals: {{json goals}}
 
 Based on this data, you must perform the following tasks:
 
@@ -90,6 +54,7 @@ Based on this data, you must perform the following tasks:
 4.  **Generate Cost-Saving Suggestions:**
     -   Provide a list of specific, actionable cost-saving suggestions.
     -   For each suggestion, determine the expense category and its potential impact ("High Impact", "Quick Win", "Good Habit").
+    -   If the user has goals, tailor some suggestions towards helping them achieve their goals faster.
 
 5.  **Suggest New Category (Optional):**
     -   If the "Other" expense is a significant portion (e.g., >20%) of total expenses, suggest a more specific category name for it like "Shopping", "Entertainment", or "Personal Care".
@@ -98,8 +63,17 @@ Based on this data, you must perform the following tasks:
     -   Based on the current monthly savings (income - total expenses), project the user's balance over the next 12 months.
     -   To make the projection optimistic, assume the user implements one or two "High Impact" or "Quick Win" suggestions. Estimate a reasonable monthly savings increase from these changes (e.g., 5-10% of current expenses) and add it to the monthly savings for the projection.
     -   The starting point for the projection (Month 0) is the current monthly savings.
-    -   For each month from 1 to 12, calculate the cumulative projected balance. For example, Month 1's balance is Month 0 balance + new monthly savings. Month 2 is Month 1 balance + new monthly savings, and so on.
-    -   Return this as an array of {month, projectedBalance} objects.
+    -   For each month from 1 to 12, calculate the cumulative projected balance.
+
+7.  **Calculate Goal Projections (if goals exist):**
+    - For each goal, calculate the number of months it would take to reach the goal amount using the current monthly savings. If savings are zero or negative, return a large number like 999.
+    - Return this as an array of {goalId, monthsToReach} objects.
+
+8.  **Calculate Long-Term Projections (if savings are positive):**
+    - If monthly savings are positive, calculate two scenarios:
+    -   a. **Investment Growth:** Project the growth of monthly savings over 5 and 10 years, assuming a conservative 7% annual compound interest rate.
+    -   b. **Debt Payoff:** Show how quickly a hypothetical $5000 debt with a 18% APR could be paid off. Assume a minimum payment of $100. Calculate the original payoff time and the new, accelerated payoff time if the user applies their entire monthly savings to the debt.
+    - If savings are not positive, do not return this field.
 
 Present your complete response as a single JSON object that adheres to the output schema.
 `,

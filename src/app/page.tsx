@@ -18,8 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { ExpenseInput } from "@/components/expense-input";
 import { ExpenseChart, type ChartData } from "@/components/expense-chart";
 import { ProjectionChart } from "@/components/projection-chart";
-import { getSuggestions } from "./actions";
-import type { Suggestion, Achievement, MonthlyPlan } from "@/ai/flows/cost-saving-suggestions";
+import { GoalTracker } from "@/components/goal-tracker";
+import { ScenarioPlanner } from "@/components/scenario-planner";
+import { LongTermImpactCard } from "@/components/long-term-impact-card";
+import { getSuggestions, getScenario } from "./actions";
+import type { Suggestion, Achievement, MonthlyPlan, Goal, GoalProjection, LongTermProjection } from "@/ai/schemas";
 import { Progress } from "@/components/ui/progress";
 import {
   Car,
@@ -41,6 +44,8 @@ import {
   Target,
 } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { useToast } from "@/hooks/use-toast";
+
 
 interface ExpenseCategory {
   id: "rent" | "utilities" | "food" | "transportation" | "other";
@@ -71,21 +76,33 @@ interface AiResultState {
   financialAnalysis: string;
   suggestedCategory?: string;
   twelveMonthPlan: MonthlyPlan[];
+  goalProjections?: GoalProjection[];
+  longTermProjections?: LongTermProjection;
 }
+
+export type Expenses = {
+  rent: number;
+  utilities: number;
+  food: number;
+  transportation: number;
+  other: number;
+};
 
 export default function HomePage() {
   const [income, setIncome] = useState(5000);
-  const [expenses, setExpenses] = useState({
+  const [expenses, setExpenses] = useState<Expenses>({
     rent: 1500,
     utilities: 150,
     food: 400,
     transportation: 200,
     other: 300,
   });
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   const [isPending, startTransition] = useTransition();
   const [aiResult, setAiResult] = useState<AiResultState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const totalExpenses = useMemo(() => Object.values(expenses).reduce((acc, cur) => acc + cur, 0), [expenses]);
   const balance = useMemo(() => income - totalExpenses, [income, totalExpenses]);
@@ -102,7 +119,7 @@ export default function HomePage() {
   const handleExpenseChange = (id: keyof typeof expenses, value: number) => {
     setExpenses(prev => ({ ...prev, [id]: value }));
   };
-
+  
   const handleIncomeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value);
     setIncome(isNaN(value) ? 0 : value);
@@ -112,13 +129,39 @@ export default function HomePage() {
     setError(null);
     setAiResult(null);
     startTransition(async () => {
-      const { result, error } = await getSuggestions({ income, ...expenses });
+      const { result, error } = await getSuggestions({ income, ...expenses, goals });
       if (error) {
         setError(error);
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        })
       } else if (result) {
         setAiResult(result);
       }
     });
+  };
+
+  const handleScenario = async (query: string) => {
+    const { result, error } = await getScenario({
+      query,
+      budget: { income, ...expenses }
+    });
+    if(error) {
+      toast({ title: "Scenario Error", description: error, variant: "destructive" });
+    } else if(result?.updatedBudget) {
+      const { updatedBudget } = result;
+      setIncome(updatedBudget.income);
+      setExpenses({
+        rent: updatedBudget.rent,
+        utilities: updatedBudget.utilities,
+        food: updatedBudget.food,
+        transportation: updatedBudget.transportation,
+        other: updatedBudget.other,
+      })
+      toast({ title: "Budget Updated!", description: "Your 'What If' scenario has been applied." });
+    }
   };
   
   const getHealthScoreColor = (score: number) => {
@@ -189,6 +232,8 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
+            <ScenarioPlanner onScenarioSubmit={handleScenario} />
+
             <Card className="shadow-xl rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-bold">
@@ -246,7 +291,7 @@ export default function HomePage() {
                   {isPending ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Generate Insights"
+                    "Generate Insights & Goals Analysis"
                   )}
                 </Button>
               </CardFooter>
@@ -279,6 +324,8 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+
+            <GoalTracker goals={goals} setGoals={setGoals} projections={aiResult?.goalProjections} savings={balance} />
 
             {aiResult && (
               <>
@@ -327,6 +374,10 @@ export default function HomePage() {
                     )}
                   </CardContent>
                 </Card>
+
+                {aiResult.longTermProjections && (
+                  <LongTermImpactCard projections={aiResult.longTermProjections} />
+                )}
 
                 {aiResult.twelveMonthPlan && aiResult.twelveMonthPlan.length > 0 && (
                   <Card className="shadow-xl rounded-2xl">
