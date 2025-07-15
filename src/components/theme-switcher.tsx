@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "next-themes"
 import { Check, Palette } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,10 @@ const themes = [
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
+
+  React.useEffect(() => {
+    document.documentElement.classList.add("dark");
+  },[])
 
   return (
     <DropdownMenu>

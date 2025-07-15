@@ -24,7 +24,6 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="oceanic"
-          enableSystem={false}
           themes={['oceanic', 'forest', 'indigo', 'default']}
           disableTransitionOnChange
         >
