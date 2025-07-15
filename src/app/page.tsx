@@ -40,6 +40,7 @@ import {
   LineChart,
   Target,
 } from "lucide-react";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 interface ExpenseCategory {
   id: "rent" | "utilities" | "food" | "transportation" | "other";
@@ -129,7 +130,10 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
-      <header className="py-8 px-4 text-center">
+      <header className="py-8 px-4 text-center relative">
+        <div className="absolute top-4 right-4">
+          <ThemeSwitcher />
+        </div>
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary font-headline tracking-tight">
           Monthly Muse
         </h1>
