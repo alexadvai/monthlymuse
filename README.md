@@ -9,6 +9,7 @@ This application was built with Firebase Studio.
 - **Interactive Budgeting:** Easily input your monthly income and adjust your spending across various categories (Rent, Utilities, Food, etc.) using intuitive sliders and inputs.
 - **"What If?" Scenario Planning:** Use natural language to explore budget changes. Ask the AI things like, "What if I lower my food spending by $50?" to see the immediate impact on your finances.
 - **AI-Powered Insights:** Click "Generate Insights" to receive personalized, actionable advice from a sophisticated AI financial advisor. Suggestions are categorized by impact ("High Impact," "Quick Win," "Good Habit") to help you prioritize.
+- **Income Growth Ideas:** Get creative and realistic suggestions for side hustles and freelance opportunities to help you build wealth and increase your income, regardless of your current savings rate.
 - **Visual Expense Breakdown:** A dynamic donut chart gives you an at-a-glance view of where your money is going, making it easy to spot your biggest areas of spending.
 - **Financial Health Score:** Receive a score from 0 to 100 that benchmarks your current financial standing, along with a brief, encouraging analysis.
 - **Unlockable Achievements:** Gamify your savings journey! Earn badges for smart financial decisions like maintaining a high savings rate or keeping housing costs low.
