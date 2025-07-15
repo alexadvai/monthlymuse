@@ -7,12 +7,16 @@ This application was built with Firebase Studio.
 ## ✨ Key Features
 
 - **Interactive Budgeting:** Easily input your monthly income and adjust your spending across various categories (Rent, Utilities, Food, etc.) using intuitive sliders and inputs.
+- **"What If?" Scenario Planning:** Use natural language to explore budget changes. Ask the AI things like, "What if I lower my food spending by $50?" to see the immediate impact on your finances.
 - **AI-Powered Insights:** Click "Generate Insights" to receive personalized, actionable advice from a sophisticated AI financial advisor. Suggestions are categorized by impact ("High Impact," "Quick Win," "Good Habit") to help you prioritize.
 - **Visual Expense Breakdown:** A dynamic donut chart gives you an at-a-glance view of where your money is going, making it easy to spot your biggest areas of spending.
 - **Financial Health Score:** Receive a score from 0 to 100 that benchmarks your current financial standing, along with a brief, encouraging analysis.
 - **Unlockable Achievements:** Gamify your savings journey! Earn badges for smart financial decisions like maintaining a high savings rate or keeping housing costs low.
+- **Financial Goal Tracking:** Set custom goals like "Vacation Fund" or "New Car" and track your progress. The AI will provide projections on when you'll reach them and tailor its advice to help you get there faster.
 - **12-Month Savings Projection:** Visualize your long-term financial growth with a line chart that projects your potential savings over the next year based on your current budget and suggested changes.
+- **Long-Term Impact Calculator:** See how your monthly savings can translate into significant wealth over 5 or 10 years through investment, or how quickly you could accelerate paying off a hypothetical debt.
 - **Dynamic Category Suggestions:** If your "Other" spending is high, the AI will suggest creating a more specific category to help you track expenses more effectively.
+- **Customizable Themes:** Personalize your experience by choosing from several modern color schemes like Oceanic, Forest, and Indigo.
 
 ## 🛠️ Tech Stack
 
@@ -21,7 +25,7 @@ Monthly Muse is built with a modern, robust technology stack:
 - **Frontend:** [Next.js](https://nextjs.org/) with [React](https://reactjs.org/) and [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components:** [ShadCN UI](https://ui.shadcn.com/)
-- **AI & Generative Features:** [Genkit](https://firebase.google.com/docs/genkit) with the [Google Gemini](https://deepmind.google/technologies/gemini/) family of models.
+- **AI & Generative Features:** [Genkit](https://firebase.google.com/docs/genkit) with the [Google Gemini](https://deepmind.google.com/technologies/gemini/) family of models.
 - **Charts:** [Recharts](https://recharts.org/)
 
 ## 🚀 Getting Started
