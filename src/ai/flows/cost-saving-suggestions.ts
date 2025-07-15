@@ -34,12 +34,20 @@ const AchievementSchema = z.object({
 });
 export type Achievement = z.infer<typeof AchievementSchema>;
 
+const MonthlyPlanSchema = z.object({
+  month: z.number().describe("The month number (1-12)."),
+  projectedBalance: z.number().describe("The projected balance at the end of this month."),
+});
+export type MonthlyPlan = z.infer<typeof MonthlyPlanSchema>;
+
+
 const CostSavingSuggestionsOutputSchema = z.object({
   financialHealthScore: z.number().min(0).max(100).describe("A score from 0 to 100 representing the user's financial health."),
   financialAnalysis: z.string().describe("A brief, one or two sentence analysis of the user's financial situation based on their budget."),
   achievements: z.array(AchievementSchema).describe("A list of achievements the user has unlocked based on their current budget."),
   suggestions: z.array(SuggestionSchema).describe('A list of structured cost-saving suggestions.'),
   suggestedCategory: z.string().optional().describe("If the 'Other' expense category is high, suggest a new, more specific category name for it (e.g., 'Shopping', 'Entertainment')."),
+  twelveMonthPlan: z.array(MonthlyPlanSchema).describe("A 12-month savings projection based on current numbers and incorporating some of the suggestions."),
 });
 export type CostSavingSuggestionsOutput = z.infer<typeof CostSavingSuggestionsOutputSchema>;
 
@@ -85,6 +93,13 @@ Based on this data, you must perform the following tasks:
 
 5.  **Suggest New Category (Optional):**
     -   If the "Other" expense is a significant portion (e.g., >20%) of total expenses, suggest a more specific category name for it like "Shopping", "Entertainment", or "Personal Care".
+
+6.  **Create a 12-Month Savings Projection:**
+    -   Based on the current monthly savings (income - total expenses), project the user's balance over the next 12 months.
+    -   To make the projection optimistic, assume the user implements one or two "High Impact" or "Quick Win" suggestions. Estimate a reasonable monthly savings increase from these changes (e.g., 5-10% of current expenses) and add it to the monthly savings for the projection.
+    -   The starting point for the projection (Month 0) is the current monthly savings.
+    -   For each month from 1 to 12, calculate the cumulative projected balance. For example, Month 1's balance is Month 0 balance + new monthly savings. Month 2 is Month 1 balance + new monthly savings, and so on.
+    -   Return this as an array of {month, projectedBalance} objects.
 
 Present your complete response as a single JSON object that adheres to the output schema.
 `,

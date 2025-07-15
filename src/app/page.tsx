@@ -17,12 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ExpenseInput } from "@/components/expense-input";
 import { ExpenseChart, type ChartData } from "@/components/expense-chart";
+import { ProjectionChart } from "@/components/projection-chart";
 import { getSuggestions } from "./actions";
-import type { Suggestion, Achievement } from "@/ai/flows/cost-saving-suggestions";
+import type { Suggestion, Achievement, MonthlyPlan } from "@/ai/flows/cost-saving-suggestions";
 import { Progress } from "@/components/ui/progress";
 import {
   Car,
-  Home as HomeIcon,
+  HomeIcon,
   UtensilsCrossed,
   Zap,
   MoreHorizontal,
@@ -68,6 +69,7 @@ interface AiResultState {
   financialHealthScore: number;
   financialAnalysis: string;
   suggestedCategory?: string;
+  twelveMonthPlan: MonthlyPlan[];
 }
 
 export default function HomePage() {
@@ -275,51 +277,70 @@ export default function HomePage() {
             </Card>
 
             {aiResult && (
-              <Card className="shadow-xl rounded-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-bold">
-                    <ShieldCheck className="text-accent" />
-                    <span>Financial Health</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <Label>Health Score</Label>
-                      <span className={`text-2xl font-bold ${getHealthScoreColor(aiResult.financialHealthScore)}`}>{aiResult.financialHealthScore} <span className="text-sm font-normal text-muted-foreground">/ 100</span></span>
-                    </div>
-                    <Progress value={aiResult.financialHealthScore} className="h-3" indicatorClassName={getHealthScoreColor(aiResult.financialHealthScore).replace('text-','bg-')} />
-                    <p className="text-sm text-muted-foreground mt-2">{aiResult.financialAnalysis}</p>
-                  </div>
-
-                  {aiResult.achievements.length > 0 && (
+              <>
+                <Card className="shadow-xl rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-bold">
+                      <ShieldCheck className="text-accent" />
+                      <span>Financial Health</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <div>
-                      <Label className="flex items-center gap-2 mb-3">
-                        <Award className="w-4 h-4"/>
-                        Achievements Unlocked
-                      </Label>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        {aiResult.achievements.map((ach, i) => (
-                           <div key={i} className="bg-secondary/50 p-3 rounded-lg border border-border">
-                              <p className="font-semibold text-secondary-foreground">{ach.name}</p>
-                              <p className="text-muted-foreground text-xs">{ach.description}</p>
-                           </div>
-                        ))}
+                      <div className="flex justify-between items-end mb-1">
+                        <Label>Health Score</Label>
+                        <span className={`text-2xl font-bold ${getHealthScoreColor(aiResult.financialHealthScore)}`}>{aiResult.financialHealthScore} <span className="text-sm font-normal text-muted-foreground">/ 100</span></span>
                       </div>
+                      <Progress value={aiResult.financialHealthScore} className="h-3" indicatorClassName={getHealthScoreColor(aiResult.financialHealthScore).replace('text-','bg-')} />
+                      <p className="text-sm text-muted-foreground mt-2">{aiResult.financialAnalysis}</p>
                     </div>
-                  )}
 
-                  {aiResult.suggestedCategory && (
-                     <Alert>
-                        <Target className="h-4 w-4" />
-                        <AlertTitle>Suggestion for 'Other'</AlertTitle>
-                        <AlertDescription>
-                          Consider creating a new category named <span className="font-semibold text-primary">"{aiResult.suggestedCategory}"</span> to better track your spending.
-                        </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
+                    {aiResult.achievements.length > 0 && (
+                      <div>
+                        <Label className="flex items-center gap-2 mb-3">
+                          <Award className="w-4 h-4"/>
+                          Achievements Unlocked
+                        </Label>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {aiResult.achievements.map((ach, i) => (
+                             <div key={i} className="bg-secondary/50 p-3 rounded-lg border border-border">
+                                <p className="font-semibold text-secondary-foreground">{ach.name}</p>
+                                <p className="text-muted-foreground text-xs">{ach.description}</p>
+                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiResult.suggestedCategory && (
+                       <Alert>
+                          <Target className="h-4 w-4" />
+                          <AlertTitle>Suggestion for 'Other'</AlertTitle>
+                          <AlertDescription>
+                            Consider creating a new category named <span className="font-semibold text-primary">"{aiResult.suggestedCategory}"</span> to better track your spending.
+                          </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {aiResult.twelveMonthPlan && aiResult.twelveMonthPlan.length > 0 && (
+                  <Card className="shadow-xl rounded-2xl">
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2 font-bold">
+                           <LineChart className="text-accent" />
+                           <span>12-Month Projection</span>
+                        </CardTitle>
+                        <CardDescription>
+                           Your potential savings growth over the next year.
+                        </CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                        <ProjectionChart data={aiResult.twelveMonthPlan} />
+                     </CardContent>
+                  </Card>
+                )}
+              </>
             )}
 
           </div>
