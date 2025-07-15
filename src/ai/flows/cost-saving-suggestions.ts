@@ -75,11 +75,10 @@ Based on this data, you must perform the following tasks:
     -   b. **Debt Payoff:** Show how quickly a hypothetical $5000 debt with a 18% APR could be paid off. Assume a minimum payment of $100. Calculate the original payoff time and the new, accelerated payoff time if the user applies their entire monthly savings to the debt.
     - If savings are not positive, do not return this field.
 
-9.  **Generate Income Suggestions (Optional):**
-    -   If the user's savings are low or negative, or if they have ambitious goals, suggest 1-2 realistic side hustles or freelance opportunities.
+9.  **Generate Income Suggestions:**
+    -   You must always suggest 2-3 creative and realistic side hustles or freelance opportunities to help the user build wealth, regardless of their current savings rate.
     -   Ideas could include things like "Freelance Social Media Management", "Pet Sitting on Weekends", or "Selling Crafts Online".
     -   Keep the suggestions brief and encouraging.
-    -   If income suggestions are not necessary, do not return this field.
 
 Present your complete response as a single JSON object that adheres to the output schema.
 `,
