@@ -68,6 +68,11 @@ export const LongTermProjectionSchema = z.object({
 });
 export type LongTermProjection = z.infer<typeof LongTermProjectionSchema>;
 
+export const IncomeSuggestionSchema = z.object({
+    title: z.string().describe("The title of the income suggestion, e.g., 'Freelance Writing'."),
+    description: z.string().describe("A brief description of the income-generating idea."),
+});
+export type IncomeSuggestion = z.infer<typeof IncomeSuggestionSchema>;
 
 export const CostSavingSuggestionsOutputSchema = z.object({
   financialHealthScore: z.number().min(0).max(100).describe("A score from 0 to 100 representing the user's financial health."),
@@ -78,6 +83,7 @@ export const CostSavingSuggestionsOutputSchema = z.object({
   twelveMonthPlan: z.array(MonthlyPlanSchema).describe("A 12-month savings projection based on current numbers and incorporating some of the suggestions."),
   goalProjections: z.array(GoalProjectionSchema).optional().describe("Projections for how long it will take to reach each financial goal."),
   longTermProjections: LongTermProjectionSchema.optional().describe("Projections for long-term investment growth and debt payoff."),
+  incomeSuggestions: z.array(IncomeSuggestionSchema).optional().describe("A list of potential side hustles or income-generating ideas."),
 });
 export type CostSavingSuggestionsOutput = z.infer<typeof CostSavingSuggestionsOutputSchema>;
 

@@ -21,8 +21,9 @@ import { ProjectionChart } from "@/components/projection-chart";
 import { GoalTracker } from "@/components/goal-tracker";
 import { ScenarioPlanner } from "@/components/scenario-planner";
 import { LongTermImpactCard } from "@/components/long-term-impact-card";
+import { IncomeSuggestionsCard } from "@/components/income-suggestions-card";
 import { getSuggestions, getScenario } from "./actions";
-import type { Suggestion, Achievement, MonthlyPlan, Goal, GoalProjection, LongTermProjection } from "@/ai/schemas";
+import type { Suggestion, Achievement, MonthlyPlan, Goal, GoalProjection, LongTermProjection, IncomeSuggestion } from "@/ai/schemas";
 import { Progress } from "@/components/ui/progress";
 import {
   Car,
@@ -78,6 +79,7 @@ interface AiResultState {
   twelveMonthPlan: MonthlyPlan[];
   goalProjections?: GoalProjection[];
   longTermProjections?: LongTermProjection;
+  incomeSuggestions?: IncomeSuggestion[];
 }
 
 export type Expenses = {
@@ -374,6 +376,10 @@ export default function HomePage() {
                     )}
                   </CardContent>
                 </Card>
+
+                {aiResult.incomeSuggestions && aiResult.incomeSuggestions.length > 0 && (
+                  <IncomeSuggestionsCard suggestions={aiResult.incomeSuggestions} />
+                )}
 
                 {aiResult.longTermProjections && (
                   <LongTermImpactCard projections={aiResult.longTermProjections} />
