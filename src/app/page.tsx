@@ -326,6 +326,10 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            
+            {aiResult?.incomeSuggestions && aiResult.incomeSuggestions.length > 0 && (
+              <IncomeSuggestionsCard suggestions={aiResult.incomeSuggestions} />
+            )}
 
             <GoalTracker goals={goals} setGoals={setGoals} projections={aiResult?.goalProjections} savings={balance} />
 
@@ -376,10 +380,6 @@ export default function HomePage() {
                     )}
                   </CardContent>
                 </Card>
-
-                {aiResult.incomeSuggestions && aiResult.incomeSuggestions.length > 0 && (
-                  <IncomeSuggestionsCard suggestions={aiResult.incomeSuggestions} />
-                )}
 
                 {aiResult.longTermProjections && (
                   <LongTermImpactCard projections={aiResult.longTermProjections} />
