@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview This file defines the shared Zod schemas and TypeScript types used across the application,
  * particularly for AI flow inputs and outputs.
