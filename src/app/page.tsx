@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useTransition, type ReactNode } from "react";
@@ -43,6 +44,8 @@ import {
   ShieldCheck,
   LineChart,
   Target,
+  Apple,
+  PiggyBank,
 } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +71,13 @@ const suggestionIcons = {
   "High Impact": <Trophy className="w-4 h-4 text-amber-400" />,
   "Quick Win": <Sparkles className="w-4 h-4 text-rose-400" />,
   "Good Habit": <Activity className="w-4 h-4 text-emerald-400" />,
+};
+
+const achievementIcons: Record<string, React.ReactNode> = {
+  'Super Saver': <PiggyBank className="w-5 h-5 text-primary" />,
+  'Budget Boss': <ShieldCheck className="w-5 h-5 text-emerald-500" />,
+  'Frugal Foodie': <Apple className="w-5 h-5 text-rose-500" />,
+  'Housing Hero': <HomeIcon className="w-5 h-5 text-blue-500" />,
 };
 
 interface AiResultState {
@@ -327,12 +337,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
             
-            {aiResult?.incomeSuggestions && aiResult.incomeSuggestions.length > 0 && (
-              <IncomeSuggestionsCard suggestions={aiResult.incomeSuggestions} />
-            )}
-
-            <GoalTracker goals={goals} setGoals={setGoals} projections={aiResult?.goalProjections} savings={balance} />
-
             {aiResult && (
               <>
                 <Card className="shadow-xl rounded-2xl">
@@ -358,11 +362,14 @@ export default function HomePage() {
                           <Award className="w-4 h-4"/>
                           Achievements Unlocked
                         </Label>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           {aiResult.achievements.map((ach, i) => (
-                             <div key={i} className="bg-secondary/50 p-3 rounded-lg border border-border">
-                                <p className="font-semibold text-secondary-foreground">{ach.name}</p>
-                                <p className="text-muted-foreground text-xs">{ach.description}</p>
+                             <div key={i} className="flex items-center gap-3 bg-secondary/50 p-3 rounded-lg border border-border">
+                                {achievementIcons[ach.name] || <Award className="w-5 h-5 text-muted-foreground" />}
+                                <div>
+                                  <p className="font-semibold text-secondary-foreground">{ach.name}</p>
+                                  <p className="text-muted-foreground text-xs">{ach.description}</p>
+                                </div>
                              </div>
                           ))}
                         </div>
@@ -380,6 +387,12 @@ export default function HomePage() {
                     )}
                   </CardContent>
                 </Card>
+
+                {aiResult.incomeSuggestions && aiResult.incomeSuggestions.length > 0 && (
+                  <IncomeSuggestionsCard suggestions={aiResult.incomeSuggestions} />
+                )}
+
+                <GoalTracker goals={goals} setGoals={setGoals} projections={aiResult?.goalProjections} savings={balance} />
 
                 {aiResult.longTermProjections && (
                   <LongTermImpactCard projections={aiResult.longTermProjections} />
